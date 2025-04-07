@@ -1,4 +1,4 @@
-# AI Tweet Reply Extension
+# Twiply - AI Tweet Reply Chrome Extension
 
 A Chrome extension that helps you generate AI replies to tweets using OpenAI's GPT-4o Mini model. The extension provides a settings panel to customize your API key and system prompt.
 

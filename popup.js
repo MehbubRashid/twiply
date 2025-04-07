@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', function() {
       // When returning from settings, show the appropriate screen based on whether we have a tweet
       mainTab.style.display = 'block';
       settingsTab.style.display = 'none';
-      headerTitle.textContent = 'AI Tweet Reply';
+      headerTitle.textContent = 'Twiply - AI Tweet Reply';
       
       // If we don't have a tweet, make sure the welcome screen is showing
       if (!currentTweetText) {
