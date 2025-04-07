@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>AI Tweet Reply Extension</title>
+  <style>
+    body {
+      width: 350px;
+      height: 500px;
+      padding: 0;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+    }
+    
+    .container {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 15px;
+      background-color: #4285f4;
+      color: white;
+    }
+    
+    .settings-icon {
+      cursor: pointer;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .settings-icon svg {
+      width: 20px;
+      height: 20px;
+      fill: white;
+    }
+    
+    .tabs {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    
+    .main-tab, .settings-tab {
+      height: 100%;
+      padding: 15px;
+      overflow-y: auto;
+      box-sizing: border-box;
+    }
+    
+    .settings-tab {
+      display: none;
+    }
+    
+    .btn {
+      padding: 8px 15px;
+      background-color: #4285f4;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-right: 5px;
+    }
+    
+    .btn:hover {
+      background-color: #3367d6;
+    }
+    
+    .btn-secondary {
+      background-color: #6c757d;
+    }
+    
+    .btn-secondary:hover {
+      background-color: #5a6268;
+    }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    
+    input[type="text"], textarea, select {
+      width: 100%;
+      padding: 8px;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+    
+    .tweet-text {
+      background-color: #f8f9fa;
+      padding: 10px;
+      border-radius: 4px;
+      margin-bottom: 15px;
+      border-left: 3px solid #4285f4;
+    }
+    
+    .button-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 15px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    #welcome-screen {
+      text-align: center;
+      padding: 20px;
+    }
+    
+    #welcome-screen img {
+      width: 100px;
+      height: 100px;
+      margin-bottom: 15px;
+    }
+    
+    #welcome-screen .steps {
+      text-align: left;
+      margin-top: 20px;
+      padding-left: 15px;
+    }
+    
+    #welcome-screen .steps li {
+      margin-bottom: 10px;
+    }
+
+    #reply-screen {
+      display: none;
+    }
+
+    .loading {
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    .error {
+      color: #dc3545;
+      margin-top: 5px;
+    }
+    
+    .tone-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 15px;
+    }
+    
+    .tone-chip {
+      background-color: #f1f3f4;
+      border: 1px solid #dadce0;
+      border-radius: 16px;
+      padding: 4px 12px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .tone-chip:hover {
+      background-color: #e8eaed;
+    }
+    
+    .tone-chip.active {
+      background-color: #4285f4;
+      color: white;
+      border-color: #4285f4;
+    }
+    
+    .footer {
+      text-align: center;
+      padding: 8px;
+      font-size: 12px;
+      color: #666;
+      border-top: 1px solid #eee;
+      margin-top: auto;
+    }
+    
+    .footer a {
+      color: #4285f4;
+      text-decoration: none;
+      vertical-align: middle;
+    }
+    
+    .footer a:hover {
+      text-decoration: underline;
+    }
+    
+    .footer img {
+      vertical-align: middle;
+      margin: 0 2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h2 id="header-title">AI Tweet Reply</h2>
+      <div class="settings-icon" id="settingsIcon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.44.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.04.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.57 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+        </svg>
+      </div>
+    </div>
+    
+    <div class="tabs">
+      <!-- Main Tab -->
+      <div class="main-tab" id="mainTab">
+        <div id="welcome-screen">
+          <h3>AI Tweet Reply</h3>
+          <img src="images/twtreply.png" alt="AI Tweet Reply">
+          <p>Generate AI-powered replies to tweets with different tones.</p>
+          
+          <div class="steps">
+            <h4>How to use:</h4>
+            <ol>
+              <li>Navigate to Twitter</li>
+              <li>Find a tweet you want to reply to</li>
+              <li>Click the small AI button next to the reply button</li>
+              <li>Choose a tone for your reply</li>
+              <li>Edit the generated reply if needed</li>
+              <li>Click "Post Reply" to add it to the tweet</li>
+            </ol>
+          </div>
+          
+          <p><small>Don't forget to set your OpenAI API key in the settings.</small></p>
+        </div>
+        
+        <div id="reply-screen">
+          <div class="form-group">
+            <label>Original Tweet:</label>
+            <div class="tweet-text" id="originalTweet"></div>
+          </div>
+          
+          <div class="form-group">
+            <label>Reply Tone:</label>
+            <div class="tone-chips">
+              <div class="tone-chip active" data-tone="default">Default</div>
+              <div class="tone-chip" data-tone="funny">Funny</div>
+              <div class="tone-chip" data-tone="supportive">Supportive</div>
+              <div class="tone-chip" data-tone="excited">Excited</div>
+              <div class="tone-chip" data-tone="wow">Wow</div>
+              <div class="tone-chip" data-tone="curious">Curious</div>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label>AI Reply:</label>
+            <textarea id="aiReply" placeholder="Generated reply will appear here..."></textarea>
+          </div>
+          
+          <div class="loading" id="loadingIndicator" style="display: none;">
+            Generating reply...
+          </div>
+          
+          <div class="button-row">
+            <button class="btn btn-secondary" id="regenerateBtn">Regenerate</button>
+            <button class="btn" id="postBtn">Post Reply</button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Settings Tab -->
+      <div class="settings-tab" id="settingsTab">
+        <h3>Settings</h3>
+        
+        <div class="form-group">
+          <label for="apiKey">OpenAI API Key:</label>
+          <input type="text" id="apiKey" placeholder="Enter your OpenAI API key">
+        </div>
+        
+        <div class="form-group">
+          <label for="systemPrompt">System Prompt:</label>
+          <textarea id="systemPrompt" placeholder="Enter system prompt for the AI"></textarea>
+        </div>
+        
+        <div class="button-row">
+          <button class="btn" id="saveSettingsBtn">Save Settings</button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="footer">
+      Made with <img src="images/heart.png" alt="❤" width="17" height="17"> by <img src="images/x-logo.png" alt="X" width="17" height="17"> <a href="https://x.com/PromoteInPublic" target="_blank">Mehbub Rashid</a>
+    </div>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html> 
