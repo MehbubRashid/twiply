@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Twiply - AI Tweet Reply using OpenAI API key</title>
+  <title>Twiply - AI Tweet Reply using Gemini/OpenAI API key</title>
   <style>
     body {
       width: 350px;
@@ -242,7 +242,7 @@
             </ol>
           </div>
           
-          <p><small>Don't forget to set your OpenAI API key in the settings.</small></p>
+          <p><small>Don't forget to set your Gemini/OpenAI API key in the settings.</small></p>
         </div>
         
         <div id="reply-screen">
@@ -284,6 +284,19 @@
         <h3>Settings</h3>
         
         <div class="form-group">
+          <label for="aiService">AI Service:</label>
+          <select id="aiService">
+            <option value="gemini">Google Gemini</option>
+            <option value="openai">OpenAI</option>
+          </select>
+        </div>
+        
+        <div class="form-group" id="geminiApiGroup">
+          <label for="geminiApiKey">Gemini API Key:</label>
+          <input type="text" id="geminiApiKey" placeholder="Enter your Gemini API key">
+        </div>
+        
+        <div class="form-group" id="openaiApiGroup" style="display: none;">
           <label for="apiKey">OpenAI API Key:</label>
           <input type="text" id="apiKey" placeholder="Enter your OpenAI API key">
         </div>

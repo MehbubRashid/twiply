@@ -1,6 +1,6 @@
 # Twiply - AI Tweet Reply Chrome Extension
 
-A Chrome extension that helps you generate AI replies to tweets using OpenAI's GPT-4o Mini model. The extension provides a settings panel to customize your API key and system prompt.
+A Chrome extension that helps you generate AI replies to tweets using Gemini 2.5 flash or OpenAI's GPT-4o Mini model. The extension provides a settings panel to customize your API key and system prompt.
 
 ## Features
 
@@ -9,7 +9,7 @@ A Chrome extension that helps you generate AI replies to tweets using OpenAI's G
 - **Custom Popup Interface**: Shows the original tweet and generated AI reply in a dedicated popup
 - **Regenerate Replies**: Generate new replies if you're not satisfied with the first one
 - **Auto-Post Option**: Automatically fills in and posts your reply with one click
-- **Configurable Settings**: Customize the OpenAI API key and system prompt
+- **Configurable Settings**: Customize the API key and system prompt
 
 ## Installation
 
@@ -18,6 +18,19 @@ A Chrome extension that helps you generate AI replies to tweets using OpenAI's G
 3. Enable "Developer mode" by toggling the switch in the top right
 4. Click "Load unpacked" and select the directory containing these files
 5. The extension should now be installed and visible in your toolbar
+
+## Getting a Free Gemini API Key
+
+1. Go to Google AI Studio at https://aistudio.google.com/app/apikey
+2. Sign in with your Google account (or create one if you don't have it)
+3. Click "Create API Key" button
+4. Select "Create API key in new project" (or choose an existing Google Cloud project if you have one)
+5. Copy your newly generated API key
+6. Open the extension settings by clicking the extension icon and then clicking the gear icon in the top right
+7. Select "Google Gemini" from the AI Service dropdown
+8. Paste your API key in the Gemini API Key field and click "Save Settings"
+
+**Note:** The Gemini API offers a generous free tier with no credit card required. Keep your API key secure and never share it publicly or commit it to version control.
 
 ## Getting an OpenAI API Key
 

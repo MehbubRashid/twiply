@@ -3,7 +3,11 @@ document.addEventListener('DOMContentLoaded', function() {
   const settingsIcon = document.getElementById('settingsIcon');
   const mainTab = document.getElementById('mainTab');
   const settingsTab = document.getElementById('settingsTab');
-  const apiKeyInput = document.getElementById('apiKey');
+  const aiServiceSelect = document.getElementById('aiService');
+  const geminiApiKeyInput = document.getElementById('geminiApiKey');
+  const openaiApiKeyInput = document.getElementById('apiKey');
+  const geminiApiGroup = document.getElementById('geminiApiGroup');
+  const openaiApiGroup = document.getElementById('openaiApiGroup');
   const systemPromptInput = document.getElementById('systemPrompt');
   const saveSettingsBtn = document.getElementById('saveSettingsBtn');
   const regenerateBtn = document.getElementById('regenerateBtn');
@@ -40,6 +44,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Load settings on startup
   loadSettings();
+
+  // Service selection change handler
+  aiServiceSelect.addEventListener('change', function() {
+    const selectedService = this.value;
+    if (selectedService === 'gemini') {
+      geminiApiGroup.style.display = 'block';
+      openaiApiGroup.style.display = 'none';
+    } else {
+      geminiApiGroup.style.display = 'none';  
+      openaiApiGroup.style.display = 'block';
+    }
+  });
 
   // Check if we were opened via clicking the AI button or directly
   chrome.storage.local.get(['popupOpenedViaAIButton', 'currentTweet', 'userName', 'originalTweetFormat', 'replyButtonId'], function(result) {
@@ -104,9 +120,26 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function loadSettings() {
-    chrome.storage.sync.get(['openai_api_key', 'system_prompt'], function(result) {
+    chrome.storage.sync.get(['ai_service', 'gemini_api_key', 'openai_api_key', 'system_prompt'], function(result) {
+      // Set default service to gemini
+      const selectedService = result.ai_service || 'gemini';
+      aiServiceSelect.value = selectedService;
+      
+      // Show/hide appropriate API key fields
+      if (selectedService === 'gemini') {
+        geminiApiGroup.style.display = 'block';
+        openaiApiGroup.style.display = 'none';
+      } else {
+        geminiApiGroup.style.display = 'none';
+        openaiApiGroup.style.display = 'block';
+      }
+      
+      // Load API keys
+      if (result.gemini_api_key) {
+        geminiApiKeyInput.value = result.gemini_api_key;
+      }
       if (result.openai_api_key) {
-        apiKeyInput.value = result.openai_api_key;
+        openaiApiKeyInput.value = result.openai_api_key;
       }
       
       systemPromptInput.value = result.system_prompt || DEFAULT_SYSTEM_PROMPT;
@@ -114,11 +147,15 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function saveSettings() {
-    const apiKey = apiKeyInput.value.trim();
+    const selectedService = aiServiceSelect.value;
+    const geminiApiKey = geminiApiKeyInput.value.trim();
+    const openaiApiKey = openaiApiKeyInput.value.trim();
     const systemPrompt = systemPromptInput.value.trim() || DEFAULT_SYSTEM_PROMPT;
     
     chrome.storage.sync.set({
-      openai_api_key: apiKey,
+      ai_service: selectedService,
+      gemini_api_key: geminiApiKey,
+      openai_api_key: openaiApiKey,
       system_prompt: systemPrompt
     }, function() {
       // Show saved confirmation
@@ -148,25 +185,122 @@ document.addEventListener('DOMContentLoaded', function() {
     loadingIndicator.style.display = 'block';
     aiReplyElement.value = '';
 
-    chrome.storage.sync.get(['openai_api_key', 'system_prompt'], function(result) {
-      if (!result.openai_api_key) {
-        loadingIndicator.style.display = 'none';
-        aiReplyElement.value = 'Error: Please set your OpenAI API key in Settings.';
-        return;
-      }
-
+    chrome.storage.sync.get(['ai_service', 'gemini_api_key', 'openai_api_key', 'system_prompt'], function(result) {
+      const selectedService = result.ai_service || 'gemini';
       let systemPrompt = result.system_prompt || DEFAULT_SYSTEM_PROMPT;
       
       // Add tone instruction if a tone other than default is selected
       if (selectedTone !== 'default' && TONE_INSTRUCTIONS[selectedTone]) {
         systemPrompt += '\n\n' + TONE_INSTRUCTIONS[selectedTone];
       }
+
+      if (selectedService === 'gemini') {
+        generateGeminiReply(result.gemini_api_key, systemPrompt);
+      } else {
+        generateOpenAIReply(result.openai_api_key, systemPrompt);
+      }
+    });
+  }
+
+  function generateGeminiReply(apiKey, systemPrompt) {
+    if (!apiKey) {
+      loadingIndicator.style.display = 'none';
+      aiReplyElement.value = 'Error: Please set your Gemini API key in Settings.';
+      return;
+    }
+
+    const prompt = `${systemPrompt}\n\nReply to this tweet from ${currentUserName}: "${currentTweetText}"`;
+
+    fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{
+            text: prompt
+          }]
+        }],
+      })
+    })
+    .then(response => {
+      if (!response.ok) {
+        return response.json().then(errorData => {
+          throw new Error(errorData.error?.message || 'Gemini API request failed');
+        });
+      }
+      return response.json();
+    })
+    .then(data => {
+      loadingIndicator.style.display = 'none';
       
-      fetch('https://api.openai.com/v1/chat/completions', {
+      if (data.candidates && data.candidates[0]) {
+        const candidate = data.candidates[0];
+        
+        // Check for MAX_TOKENS finish reason - this is a known API issue
+        if (candidate.finishReason === 'MAX_TOKENS') {
+          // Try to get any partial content that might exist
+          if (!candidate.content || !candidate.content.parts || !candidate.content.parts[0]) {
+            aiReplyElement.value = 'Error: Response was truncated due to token limit. Please try again or use a shorter prompt.';
+            return;
+          }
+        }
+        
+        let reply = '';
+        
+        // Check different possible response structures
+        if (candidate.content && candidate.content.parts && candidate.content.parts[0] && candidate.content.parts[0].text) {
+          reply = candidate.content.parts[0].text.trim();
+        } else if (candidate.text) {
+          reply = candidate.text.trim();
+        } else if (candidate.content && candidate.content.text) {
+          reply = candidate.content.text.trim();
+        } else {
+          aiReplyElement.value = 'Error: Unexpected response structure. Check console for details.';
+          return;
+        }
+        
+        // Check if we got empty content
+        if (!reply || reply.length === 0) {
+          if (candidate.finishReason === 'MAX_TOKENS') {
+            aiReplyElement.value = 'Error: Response was truncated and no content was returned. This is a known API issue. Please try again.';
+          } else {
+            aiReplyElement.value = 'Error: Empty response received. Please try again.';
+          }
+          return;
+        }
+        
+        // remove leading and trailing quotes
+        reply = reply.replace(/^"|"$/g, '');
+        aiReplyElement.value = reply;
+        
+        // Add warning if response was truncated
+        if (candidate.finishReason === 'MAX_TOKENS') {
+          aiReplyElement.value += '\n\n[Note: Response was truncated due to length limits]';
+        }
+      } else {
+        aiReplyElement.value = 'Error: No response generated';
+      }
+    })
+    .catch(error => {
+      loadingIndicator.style.display = 'none';
+      aiReplyElement.value = "Error: " + error.message;
+    });
+  }
+
+  function generateOpenAIReply(apiKey, systemPrompt) {
+    if (!apiKey) {
+      loadingIndicator.style.display = 'none';
+      aiReplyElement.value = 'Error: Please set your OpenAI API key in Settings.';
+      return;
+    }
+      
+    fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${result.openai_api_key}`
+          'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
           model: 'gpt-4o-mini',
@@ -199,11 +333,9 @@ document.addEventListener('DOMContentLoaded', function() {
         aiReplyElement.value = reply;
       })
       .catch(error => {
-        console.error("Error generating reply:", error);
         loadingIndicator.style.display = 'none';
         aiReplyElement.value = "Error: " + error.message;
       });
-    });
   }
 
   function clearStoredTweetData() {
