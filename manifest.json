@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Twiply - AI Tweet Reply using Gemini/OpenAI API key",
-  "version": "1.1",
-  "description": "A Chrome extension that generates AI replies to tweets using your own Gemini/OpenAI API key",
+  "version": "1.1.1",
+  "description": "Unlimited + 100% Free AI powered tweet replies in one click. No third-party or Twitter API needed. Just paste your free Gemini/OpenAi api key and start using.",
   "action": {
     "default_popup": "popup.html",
     "default_icon": "images/icon-16x16.png"
