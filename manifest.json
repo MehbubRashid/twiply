@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Twiply - AI Tweet Reply using Gemini/OpenAI API key",
   "version": "1.1.1",
-  "description": "Unlimited + 100% Free AI powered tweet replies in one click. No third-party or Twitter API needed. Just paste your free Gemini/OpenAi api key and start using.",
+  "description": "Unlimited + 100% Free AI tweet reply. No third-party or Twitter API needed. Paste your free Gemini/OpenAi api key and start.",
   "action": {
     "default_popup": "popup.html",
     "default_icon": "images/icon-16x16.png"
